@@ -28,7 +28,7 @@
   @apply bg-charcoal/80 backdrop-blur-md border border-white/5;
 }
 
-. molten-glow {
+.molten-glow {
   box-shadow: 0 0 20px rgba(249, 115, 22, 0.15);
 }
 
@@ -156,11 +156,11 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
-    }
+  }
   body {
-    @apply bg-background text-foreground;
-    }
+    @apply bg-obsidian text-zinc-100 font-sans antialiased;
+  }
   html {
     @apply font-sans;
-    }
+  }
 }

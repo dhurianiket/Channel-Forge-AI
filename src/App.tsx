@@ -1,34 +1,28 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import { onAuthStateChanged, User } from "firebase/auth";
-import { auth } from "@/src/lib/firebase";
 import { AppShell } from "@/src/components/layout/AppShell";
 import { Toaster } from "@/components/ui/sonner";
 import { Dashboard } from "@/src/components/dashboard/Dashboard";
-import { IdeaEngine } from "@/src/components/projects/IdeaEngine";
 import { ChannelStrategy } from "@/src/components/channels/ChannelStrategy";
-import { ResearchHub } from "@/src/components/projects/ResearchHub";
-import { ScriptStudio } from "@/src/components/projects/ScriptStudio";
-import { VisualPlanner } from "@/src/components/projects/VisualPlanner";
-import { VoiceoverModule } from "@/src/components/projects/VoiceoverModule";
 import { ProjectsList } from "@/src/components/projects/ProjectsList";
+import { ProjectDashboard } from "@/src/components/projects/ProjectDashboard";
+import { PilotBoard } from "@/src/components/pilot/PilotBoard";
+import { OperatorDashboard } from "@/src/components/ops/OperatorDashboard";
+import { ValidationSuite } from "@/src/components/ops/ValidationSuite";
+import { TeamMembersPage } from "@/src/components/team/TeamMembersPage";
+import { WorkloadBoard } from "@/src/components/ops/WorkloadBoard";
+import { TemplateLibrary } from "@/src/components/templates/TemplateLibrary";
+import { ChannelOpsDashboard } from "@/src/components/channels/ChannelOpsDashboard";
+import { MonetizationHub } from "@/src/components/monetization/MonetizationHub";
 import { Login } from "@/src/components/auth/Login";
+import { AuthProvider, useAuth } from "@/src/lib/auth-context";
 
-export default function App() {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (u) => {
-      setUser(u);
-      setLoading(false);
-    });
-    return () => unsubscribe();
-  }, []);
-
+function AppRoutes() {
+  const { user, loading } = useAuth();
+  
   if (loading) {
     return (
-      <div className="h-screen w-screen bg-obsidian flex items-center justify-center">
+      <div className="h-[100dvh] w-screen bg-obsidian flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-brand-teal to-brand-orange animate-pulse" />
           <span className="text-[10px] font-mono uppercase tracking-[0.4em] text-zinc-600">Initializing OS...</span>
@@ -48,12 +42,16 @@ export default function App() {
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/channels" element={<ChannelStrategy />} />
-          <Route path="/ideas" element={<IdeaEngine />} />
-          <Route path="/research" element={<ResearchHub />} />
-          <Route path="/scripting" element={<ScriptStudio />} />
-          <Route path="/visuals" element={<VisualPlanner />} />
-          <Route path="/audio" element={<VoiceoverModule />} />
           <Route path="/projects" element={<ProjectsList />} />
+          <Route path="/projects/:projectId" element={<ProjectDashboard />} />
+          <Route path="/pilot" element={<PilotBoard />} />
+          <Route path="/ops" element={<OperatorDashboard />} />
+          <Route path="/ops/validation" element={<ValidationSuite />} />
+          <Route path="/team" element={<TeamMembersPage />} />
+          <Route path="/workload" element={<WorkloadBoard />} />
+          <Route path="/templates" element={<TemplateLibrary />} />
+          <Route path="/channel-ops" element={<ChannelOpsDashboard />} />
+          <Route path="/monetization" element={<MonetizationHub />} />
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
@@ -62,3 +60,12 @@ export default function App() {
     </Router>
   );
 }
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppRoutes />
+    </AuthProvider>
+  );
+}
+

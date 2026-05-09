@@ -1,9 +1,11 @@
 import React from "react";
 import { LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { signInWithGoogle } from "@/src/lib/firebase";
+import { useAuth } from "@/src/lib/auth-context";
 
 export const Login = () => {
+  const { signIn } = useAuth();
+  
   return (
     <div className="min-h-screen bg-obsidian flex flex-col items-center justify-center p-6 relative overflow-hidden">
        {/* Background artifacts */}
@@ -23,7 +25,7 @@ export const Login = () => {
 
           <div className="space-y-4">
              <Button 
-               onClick={signInWithGoogle}
+               onClick={signIn}
                className="w-full bg-white text-obsidian hover:bg-zinc-200 h-14 rounded-2xl font-bold flex items-center justify-center gap-3 active:scale-95 transition-all shadow-xl shadow-white/5"
              >
                 <img src="https://www.google.com/favicon.ico" className="w-5 h-5" alt="Google" />

@@ -1,6 +1,6 @@
 import { db } from "@/src/lib/firebase";
 import { collection, doc, setDoc, Timestamp } from "firebase/firestore";
-import { ProjectStatus, ProjectStage } from "@/src/types";
+import { ProjectStage } from "@/src/types";
 
 export async function seedDemoData(userId: string) {
   const workspaceId = `ws_${userId}`;
@@ -37,19 +37,19 @@ export async function seedDemoData(userId: string) {
         id: "p1", 
         title: "The Rise of Silicon Mythology", 
         stage: ProjectStage.SCRIPT, 
-        status: ProjectStatus.ACTIVE 
+        status: "ACTIVE" 
     },
     { 
         id: "p2", 
         title: "Why Architecture is Failing", 
         stage: ProjectStage.RESEARCH, 
-        status: ProjectStatus.ACTIVE 
+        status: "ACTIVE" 
     },
     { 
         id: "p3", 
         title: "The Future of Space Habitats", 
-        stage: ProjectStage.ROUGH_CUT, 
-        status: ProjectStatus.ACTIVE 
+        stage: ProjectStage.METADATA, 
+        status: "ACTIVE" 
     }
   ];
 

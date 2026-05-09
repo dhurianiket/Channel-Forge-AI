@@ -1,0 +1,112 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Global lock
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Auth helpers
+    function isSignedIn() { return request.auth != null; }
+    function isOwner(uid) { return isSignedIn() && request.auth.uid == uid; }
+    
+    // Workspace access helper
+    function isWorkspaceMember(workspaceId) {
+       return isSignedIn() && (
+         get(/databases/$(database)/documents/workspaces/$(workspaceId)).data.ownerId == request.auth.uid ||
+         exists(/databases/$(database)/documents/workspaces/$(workspaceId)/members/$(request.auth.uid))
+       );
+    }
+    
+    // Role Resolution
+    function getRole(workspaceId) {
+       let isOwn = get(/databases/$(database)/documents/workspaces/$(workspaceId)).data.ownerId == request.auth.uid;
+       let memberDoc = get(/databases/$(database)/documents/workspaces/$(workspaceId)/members/$(request.auth.uid));
+       return isOwn ? 'owner' : (memberDoc != null ? memberDoc.data.role : 'reviewer');
+    }
+
+    match /users/{uid} {
+      allow read, write: if isOwner(uid);
+    }
+
+    match /workspaces/{workspaceId} {
+      allow read: if isWorkspaceMember(workspaceId);
+      allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
+      allow update, delete: if isWorkspaceMember(workspaceId) && getRole(workspaceId) in ['owner', 'admin'];
+      
+      match /templates/{templateId} {
+        allow read: if isWorkspaceMember(workspaceId);
+        allow write: if isWorkspaceMember(workspaceId) && getRole(workspaceId) in ['owner', 'admin', 'producer'];
+      }
+      
+      match /members/{memberId} {
+        allow read: if isWorkspaceMember(workspaceId);
+        allow create: if isWorkspaceMember(workspaceId);
+        allow update, delete: if isWorkspaceMember(workspaceId) && getRole(workspaceId) in ['owner', 'admin'];
+      }
+      
+      match /channels/{channelId} {
+        allow read: if isWorkspaceMember(workspaceId);
+        allow create: if isWorkspaceMember(workspaceId) && request.resource.data.workspaceId == workspaceId;
+        allow update, delete: if isWorkspaceMember(workspaceId) && getRole(workspaceId) in ['owner', 'admin'];
+
+        match /sponsors/{sponsorId} { allow read, write: if isWorkspaceMember(workspaceId); }
+        match /sponsorship_deals/{dealId} { allow read, write: if isWorkspaceMember(workspaceId); }
+        match /affiliate_links/{linkId} { allow read, write: if isWorkspaceMember(workspaceId); }
+        
+        match /projects/{projectId} {
+          allow read: if isWorkspaceMember(workspaceId);
+          allow create: if isWorkspaceMember(workspaceId) && request.resource.data.workspaceId == workspaceId && request.resource.data.channelId == channelId;
+          allow update: if isWorkspaceMember(workspaceId) && (
+             request.resource.data.currentStage == resource.data.currentStage ||
+             getRole(workspaceId) in ['owner', 'admin', 'producer']
+          );
+          allow delete: if isWorkspaceMember(workspaceId) && getRole(workspaceId) in ['owner', 'admin'];
+          
+          match /approvals/{approvalId} {
+            allow read: if isWorkspaceMember(workspaceId);
+            allow create: if isWorkspaceMember(workspaceId);
+            allow update: if isWorkspaceMember(workspaceId) && (
+               (request.resource.data.status in ['APPROVED', 'REJECTED']) ? (
+                  resource.data.stage == 'SCRIPTING' ? getRole(workspaceId) in ['owner', 'admin', 'producer', 'scriptwriter'] :
+                  resource.data.stage == 'FACT_CHECK' ? getRole(workspaceId) in ['owner', 'admin', 'producer', 'researcher'] :
+                  resource.data.stage == 'ROUGH_CUT' ? getRole(workspaceId) in ['owner', 'admin', 'producer', 'editor'] :
+                  resource.data.stage == 'READY_TO_PUBLISH' ? getRole(workspaceId) in ['owner', 'admin', 'producer'] :
+                  true
+               ) : true
+            );
+            allow delete: if isWorkspaceMember(workspaceId) && getRole(workspaceId) in ['owner', 'admin'];
+          }
+          
+          match /checklists/{checklistId} { allow read, write: if isWorkspaceMember(workspaceId); }
+          match /ideas/{ideaId} { allow read, write: if isWorkspaceMember(workspaceId); }
+          match /research/{factId} { allow read, write: if isWorkspaceMember(workspaceId); }
+          match /scripts/{scriptId} { allow read, write: if isWorkspaceMember(workspaceId); }
+          match /scenes/{sceneId} { allow read, write: if isWorkspaceMember(workspaceId); }
+          match /voice/{voiceId} { allow read, write: if isWorkspaceMember(workspaceId); }
+          match /metadata/{metadataId} { allow read, write: if isWorkspaceMember(workspaceId); }
+          match /roughCuts/{cutId} { allow read, write: if isWorkspaceMember(workspaceId); }
+          
+          match /publishJobs/{jobId} { 
+            allow read: if isWorkspaceMember(workspaceId); 
+            allow write: if isWorkspaceMember(workspaceId) && getRole(workspaceId) in ['owner', 'admin', 'producer', 'ops_manager'];
+          }
+          
+          match /analytics/{snapshotId} { allow read, write: if isWorkspaceMember(workspaceId); }
+          match /events/{eventId} { allow read, write: if isWorkspaceMember(workspaceId); }
+          match /automationRuns/{runId} { allow read, write: if isWorkspaceMember(workspaceId); }
+          match /shorts/{shortId} { allow read, write: if isWorkspaceMember(workspaceId); }
+          
+          match /reviews/{reviewId} { 
+            allow read: if isWorkspaceMember(workspaceId);
+            allow write: if isWorkspaceMember(workspaceId) && getRole(workspaceId) in ['owner', 'admin', 'producer', 'ops_manager'];
+          }
+          match /postmortems/{postmortemId} { allow read, write: if isWorkspaceMember(workspaceId); }
+          match /assignments/{assignmentId} { allow read, write: if isWorkspaceMember(workspaceId); }
+          match /revenue_records/{recordId} { allow read, write: if isWorkspaceMember(workspaceId); }
+        }
+      }
+    }
+  }
+}

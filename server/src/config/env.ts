@@ -1,0 +1,15 @@
+export const config = {
+  FIREBASE_ADMIN_PROJECT_ID: process.env.FIREBASE_ADMIN_PROJECT_ID || process.env.VITE_FIREBASE_PROJECT_ID,
+  FIREBASE_ADMIN_CLIENT_EMAIL: process.env.FIREBASE_ADMIN_CLIENT_EMAIL,
+  FIREBASE_ADMIN_PRIVATE_KEY: process.env.FIREBASE_ADMIN_PRIVATE_KEY,
+  
+  WEBHOOK_SIGNATURE_SECRET: process.env.WEBHOOK_SIGNATURE_SECRET || "dev_secret_change_in_prod",
+  INTERNAL_API_KEY: process.env.INTERNAL_API_KEY || "dev_internal_key",
+  
+  YOUTUBE_CLIENT_ID: process.env.YOUTUBE_CLIENT_ID,
+  YOUTUBE_CLIENT_SECRET: process.env.YOUTUBE_CLIENT_SECRET,
+  YOUTUBE_REFRESH_TOKEN: process.env.YOUTUBE_REFRESH_TOKEN,
+  
+  PORT: parseInt(process.env.PORT || "3000", 10),
+  NODE_ENV: process.env.NODE_ENV || "development",
+};

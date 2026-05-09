@@ -1,0 +1,251 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum ProjectStage {
+  IDEA
+  RESEARCH
+  FACT_PACK
+  SCRIPT
+  SCENES
+  VOICE
+  METADATA
+  APPROVAL_READY
+  PUBLISHED
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  NEEDS_REVISION
+  BLOCKED
+}
+
+enum FactConfidence {
+  HIGH
+  MEDIUM
+  LOW
+  SPECULATIVE
+}
+
+enum EntityRole {
+  OWNER
+  EDITOR
+  VIEWER
+}
+
+model User {
+  id            String             @id @default(cuid())
+  email         String             @unique
+  name          String?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  workspaces    WorkspaceMember[]
+  actions       ApprovalAction[]
+  comments      Comment[]
+}
+
+model Workspace {
+  id            String             @id @default(cuid())
+  name          String
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  members       WorkspaceMember[]
+  channels      Channel[]
+}
+
+model WorkspaceMember {
+  id          String     @id @default(cuid())
+  workspaceId String
+  userId      String
+  role        EntityRole @default(VIEWER)
+  workspace   Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, userId])
+}
+
+model Channel {
+  id              String      @id @default(cuid())
+  workspaceId     String
+  name            String
+  niche           String?
+  language        String?
+  tone            String?
+  rules           String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  workspace       Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  projects        Project[]
+  contentPillars  ContentPillar[]
+  audienceProfile AudienceProfile?
+}
+
+model AudienceProfile {
+  id        String   @id @default(cuid())
+  channelId String   @unique
+  avatar    String?  // Description of the audience (e.g. "Tech Enthusiasts")
+  channel   Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
+}
+
+model ContentPillar {
+  id        String   @id @default(cuid())
+  channelId String
+  title     String
+  channel   Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
+}
+
+model Project {
+  id              String          @id @default(cuid())
+  channelId       String
+  title           String
+  stage           ProjectStage    @default(IDEA)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  channel         Channel         @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  ideas           Idea[]
+  researchBrief   ResearchBrief?
+  scripts         Script[]
+  voiceDrafts     VoiceDraft[]
+  approvalRequests ApprovalRequest[]
+  metadataPackage MetadataPackage?
+  checklists      StageChecklist[]
+}
+
+model Idea {
+  id             String      @id @default(cuid())
+  projectId      String
+  titleDirection String?
+  suggestedAngle String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  project        Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  score          IdeaScore?
+}
+
+model IdeaScore {
+  id             String   @id @default(cuid())
+  ideaId         String   @unique
+  clickPotential Int
+  originality    Int
+  researchDepth  Int
+  idea           Idea     @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+}
+
+model ResearchBrief {
+  id         String      @id @default(cuid())
+  projectId  String      @unique
+  summary    String?
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  project    Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  factCards  FactCard[]
+  sources    ResearchSource[]
+}
+
+model ResearchSource {
+  id              String        @id @default(cuid())
+  researchBriefId String
+  url             String?
+  notes           String?
+  researchBrief   ResearchBrief @relation(fields: [researchBriefId], references: [id], onDelete: Cascade)
+}
+
+model FactCard {
+  id              String         @id @default(cuid())
+  researchBriefId String
+  claimText       String
+  confidence      FactConfidence @default(MEDIUM)
+  evidenceType    String?
+  researchBrief   ResearchBrief  @relation(fields: [researchBriefId], references: [id], onDelete: Cascade)
+}
+
+model Script {
+  id         String          @id @default(cuid())
+  projectId  String
+  status     String?
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+  project    Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  versions   ScriptVersion[]
+  scenes     Scene[]
+}
+
+model ScriptVersion {
+  id        String   @id @default(cuid())
+  scriptId  String
+  content   String
+  version   Int      @default(1)
+  createdAt DateTime @default(now())
+  script    Script   @relation(fields: [scriptId], references: [id], onDelete: Cascade)
+}
+
+model Scene {
+  id             String  @id @default(cuid())
+  scriptId       String
+  sceneNumber    Int
+  narrationText  String?
+  visualType     String?
+  aiImagePrompt  String?
+  approvalStatus ApprovalStatus @default(PENDING)
+  script         Script  @relation(fields: [scriptId], references: [id], onDelete: Cascade)
+}
+
+model VoiceDraft {
+  id         String          @id @default(cuid())
+  projectId  String
+  provider   String?
+  status     ApprovalStatus  @default(PENDING)
+  project    Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model MetadataPackage {
+  id          String   @id @default(cuid())
+  projectId   String   @unique
+  titleOption String?
+  description String?
+  tags        String?
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model ApprovalRequest {
+  id         String           @id @default(cuid())
+  projectId  String
+  stage      ProjectStage
+  status     ApprovalStatus   @default(PENDING)
+  project    Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  actions    ApprovalAction[]
+}
+
+model ApprovalAction {
+  id        String          @id @default(cuid())
+  requestId String
+  userId    String
+  action    ApprovalStatus
+  comment   String?
+  createdAt DateTime        @default(now())
+  request   ApprovalRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  userId    String
+  content   String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model StageChecklist {
+  id        String   @id @default(cuid())
+  projectId String
+  taskName  String
+  isDone    Boolean  @default(false)
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}

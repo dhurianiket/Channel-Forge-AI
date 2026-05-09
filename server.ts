@@ -2,6 +2,7 @@ import express from "express";
 import { createServer as createViteServer } from "vite";
 import path from "path";
 import { fileURLToPath } from "url";
+import { setupServerRoutes } from "./server/src/index.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -10,17 +11,8 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
-  app.use(express.json());
-
-  // API routes
-  app.get("/api/health", (req, res) => {
-    res.json({ status: "ok", timestamp: new Date().toISOString() });
-  });
-
-  // Example FFmpeg route (stub for now)
-  app.post("/api/ffmpeg/render", (req, res) => {
-    res.status(501).json({ error: "FFmpeg renderer not yet implemented" });
-  });
+  // Mount backend routes for Phase F 
+  setupServerRoutes(app);
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
