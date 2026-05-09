@@ -1,0 +1,111 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile with basic info and settings",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email"]
+    },
+    "Workspace": {
+      "title": "Workspace",
+      "description": "Organizational container for channels and projects",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "ownerId": { "type": "string" },
+        "members": { "type": "array", "items": { "type": "string" } },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "ownerId"]
+    },
+    "Channel": {
+      "title": "Channel",
+      "description": "YouTube channel configuration and strategy",
+      "type": "object",
+      "properties": {
+        "workspaceId": { "type": "string" },
+        "name": { "type": "string" },
+        "niche": { "type": "string" },
+        "audienceProfile": { "type": "string" },
+        "branding": {
+          "type": "object",
+          "properties": {
+            "tone": { "type": "string" },
+            "colors": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "strategy": {
+          "type": "object",
+          "properties": {
+            "pillars": { "type": "array", "items": { "type": "string" } },
+            "series": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["workspaceId", "name"]
+    },
+    "Project": {
+      "title": "Project",
+      "description": "A single video production project",
+      "type": "object",
+      "properties": {
+        "channelId": { "type": "string" },
+        "workspaceId": { "type": "string" },
+        "title": { "type": "string" },
+        "status": { "type": "string", "enum": ["ACTIVE", "PAUSED", "COMPLETED", "ARCHIVED"] },
+        "stage": { "type": "string", "enum": ["IDEA", "RESEARCH", "FACT_PACK", "OUTLINE", "SCRIPT", "VISUAL_PLAN", "VOICE", "ASSETS", "ROUGH_CUT", "PACKAGING", "PUBLISHED"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["channelId", "workspaceId", "title"]
+    },
+    "Idea": {
+      "title": "Idea",
+      "description": "Topic idea for a project",
+      "type": "object",
+      "properties": {
+        "projectId": { "type": "string" },
+        "topic": { "type": "string" },
+        "description": { "type": "string" },
+        "scores": {
+          "type": "object",
+          "properties": {
+            "clickPotential": { "type": "number" },
+            "originality": { "type": "number" }
+          }
+        }
+      },
+      "required": ["projectId", "topic"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles"
+    },
+    "/workspaces/{workspaceId}": {
+      "schema": "Workspace",
+      "description": "Workspaces"
+    },
+    "/channels/{channelId}": {
+      "schema": "Channel",
+      "description": "YouTube channels"
+    },
+    "/projects/{projectId}": {
+      "schema": "Project",
+      "description": "Production projects"
+    },
+    "/projects/{projectId}/ideas/{ideaId}": {
+      "schema": "Idea",
+      "description": "Ideas subcollection"
+    }
+  }
+}
