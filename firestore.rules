@@ -26,6 +26,14 @@ service cloud.firestore {
        return isOwn ? 'owner' : (memberDoc != null ? memberDoc.data.role : 'reviewer');
     }
 
+    match /{path=**}/members/{memberId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+    
+    match /{path=**}/assignments/{assignmentId} {
+      allow read: if isWorkspaceMember(resource.data.workspaceId);
+    }
+
     match /users/{uid} {
       allow read, write: if isOwner(uid);
     }
